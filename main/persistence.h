@@ -1,6 +1,14 @@
 #ifndef PERSISTENCE_H
 #define PERSISTENCE_H
 
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+struct Line {cv::Point a; cv::Point b;};
+
+
+#if 0
 #include <string>
 #include <INIReader.h>
 
@@ -8,6 +16,8 @@ using namespace std;
 
 class Persistence{
 public:
+
+    static bool verbose;
 
     void load(string name)
     {
@@ -25,6 +35,6 @@ public:
               << reader.GetBoolean("user", "active", true) << "\n";
     }
 };
-
+#endif
 
 #endif

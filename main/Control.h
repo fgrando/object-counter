@@ -4,10 +4,17 @@
 #include <string>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include "DetectorFSM.h"
+
+
+#include "persistence.h"
+
+#include <vector>
 using namespace std;
 
 class Control{
 public:
+    Control();
 
     inline string getPictureSource() {return "picture.jpg";}
     inline string getVideoSource() {return "0";}
@@ -20,6 +27,13 @@ public:
     
     void updateFrame(cv::Mat& frame);
 
+private:
+    int m_mouseX, m_mouseY, m_mouseEvent, m_kbdr;
+
+    Detector::DetectorFSM* m_input;
+
+    
+    vector<Line> m_lines;
 };
 
 #endif /* A42EBBD8_0DC9_4327_AD95_0129CA08A219 */

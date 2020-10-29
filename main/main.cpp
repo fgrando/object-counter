@@ -21,11 +21,11 @@ int main(int argc, char *argv[])
     namedWindow(GL_Control.getWindowName(), WINDOW_AUTOSIZE);
     setMouseCallback(GL_Control.getWindowName(), mouseInput, NULL); // register after the window
 
-    bool usePicture = true;
+    bool usePicture = false;
 
     if (usePicture) {
-
         frame = imread(GL_Control.getPictureSource());  
+        
         GL_Control.updateFrame(frame);
         imshow(GL_Control.getWindowName(), frame);
         GL_Control.readKeyboard(waitKey(0 /*forever*/));
@@ -41,10 +41,8 @@ int main(int argc, char *argv[])
         for(;;){
             bool result = cap.read(frame);
             
-            GL_Control.updateFrame(frame);
-            
+            GL_Control.updateFrame(frame);    
             imshow(GL_Control.getWindowName(), frame);
-
             GL_Control.readKeyboard(waitKey(1));
         }
     }
