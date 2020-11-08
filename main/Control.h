@@ -6,10 +6,15 @@
 
 #include "DetectorFSM.h"
 
+#include "command.h"
 
 #include "persistence.h"
 
+#include "Mask.h"
+
 #include <vector>
+#include <memory>
+
 using namespace std;
 
 class Control{
@@ -31,9 +36,11 @@ private:
     int m_mouseX, m_mouseY, m_mouseEvent, m_kbdr;
 
     Detector::DetectorFSM* m_input;
+    UserInput m_userInput;
 
-    
     vector<Line> m_lines;
+    vector<Command*> m_commands;
+    Mask* m_mask;
 };
 
 #endif /* A42EBBD8_0DC9_4327_AD95_0129CA08A219 */
