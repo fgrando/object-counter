@@ -7,15 +7,46 @@
 
 #include <vector>
 
-class Mask{
+class AbstractMask{
 public:
-    void draw(cv::Mat& frame);
+    virtual ~AbstractMask() {}
+
+    virtual void initialize(cv::Mat& src) = 0;
+
+    virtual void addPoly(const std::vector<cv::Point>& poly) = 0;
+
+    virtual const cv::Mat& get() = 0;
+
+    virtual void draw(cv::Mat& frame, cv::Scalar color) = 0;
+};
+
+
+class Mask : public AbstractMask{
+public:
+    Mask();
+    ~Mask() {}
+
+    void initialize(cv::Mat& src);
 
     void addPoly(const std::vector<cv::Point>& poly);
 
-private:
+    inline const cv::Mat& get() { return m_mask; }
+
+    virtual void draw(cv::Mat& frame, cv::Scalar color);
+
+protected:
+    void refresh();
+    
+    virtual inline cv::Scalar getBackground() = 0;
+    virtual inline cv::Scalar getForeground() = 0;
+    virtual inline std::string getWindowTitle() = 0;
+    cv::Size m_srcSize;
+    
+    bool m_initialized;
+
     cv::Mat m_mask;
 
+    // ares of interest
     std::vector< std::vector<cv::Point> > m_polygons;
 };
 

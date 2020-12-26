@@ -15,7 +15,8 @@ class DrawPolygonCmd : public Command{
 public:
     enum class State {Idle, WaitOrigin, Preview};
 
-    DrawPolygonCmd();
+    explicit DrawPolygonCmd(char key, cv::Scalar color);
+
     ~DrawPolygonCmd();
 
     std::string getHelp();
@@ -26,11 +27,14 @@ public:
     void addMask(Mask* mask);
 
 private:
+    char m_key;
     State m_state;
     cv::Point m_tempPoint;
     std::vector<cv::Point> m_points;
-    
+    cv::Scalar m_color;
+
     std::vector<Mask*> m_masks;
+    int m_previousEvent;
 };
 
 

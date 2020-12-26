@@ -4,9 +4,12 @@
 using namespace std;
 using namespace cv;
 
-DrawPolygonCmd::DrawPolygonCmd()
+DrawPolygonCmd::DrawPolygonCmd(char key, cv::Scalar color)
     : m_state(State::Idle)
     , m_tempPoint(0,0)
+    , m_key(key)
+    , m_previousEvent(-1)
+    , m_color(color)
 {
     
 }
@@ -19,15 +22,14 @@ std::string DrawPolygonCmd::getHelp(){
 
 
 void DrawPolygonCmd::process(const UserInput& input){
-    static int prevEvent = -1;
 
     bool lbuttonFallingEdge = (
-        (prevEvent == EVENT_MOUSEMOVE) && (input.event == EVENT_LBUTTONDOWN));
+        (m_previousEvent == EVENT_MOUSEMOVE) && (input.event == EVENT_LBUTTONDOWN));
 
     switch(m_state)
     {
     case State::Idle:
-        if (input.kbdr == 'd'){
+        if (input.kbdr == m_key){
             m_state = State::WaitOrigin;
             cout << "polycmd started" << endl;
         }
@@ -84,10 +86,15 @@ void DrawPolygonCmd::process(const UserInput& input){
         break;
     }
 
-    prevEvent = input.event;
+    m_previousEvent = input.event;
 }
 
 void DrawPolygonCmd::draw(Mat& frame){
+    cv::Mat overlay;
+    const double alpha = 0.3;
+    frame.copyTo(overlay);
+    
+    
     // draw the polygon
     vector<Point> contour = m_points;
     if (m_state == State::Preview){
@@ -96,12 +103,16 @@ void DrawPolygonCmd::draw(Mat& frame){
 
     const Point *pts = (const Point*) Mat(contour).data;
     int npts = Mat(contour).rows;
-    polylines(frame, &pts, &npts, 1, true, Scalar(0, 255, 0));
+    
+    polylines(frame, &pts, &npts, 1, true, m_color);
 
     if (contour.size() > 2){
-        Scalar color(0, 255, 0);
-        fillPoly(frame, &pts, &npts, 1, color, LINE_8);
+        fillPoly(overlay, &pts, &npts, 1, m_color, LINE_8);
     }
+
+    // blend the overlay with the source image
+    cv::addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame);
+
 }
 
 void DrawPolygonCmd::addMask(Mask* mask){
