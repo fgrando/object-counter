@@ -8,7 +8,7 @@ typedef  std::vector<Blob> TrackVector;
 
 class COP {
 public:
-    
+
     static COP& getInstance();
 
     void update(const Blob& b);
@@ -26,7 +26,7 @@ private:
 
 
     bool moved(const Blob& a, const Blob&b);
-    
+
     TrackVector m_tracks;
 };
 

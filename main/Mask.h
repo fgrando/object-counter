@@ -36,12 +36,12 @@ public:
 
 protected:
     void refresh();
-    
+
     virtual inline cv::Scalar getBackground() = 0;
     virtual inline cv::Scalar getForeground() = 0;
     virtual inline std::string getWindowTitle() = 0;
     cv::Size m_srcSize;
-    
+
     bool m_initialized;
 
     cv::Mat m_mask;

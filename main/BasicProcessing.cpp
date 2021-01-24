@@ -12,12 +12,12 @@ void BasicProcessing::initialize(Parameters& params){
 
     if (m_params.bgSubtractor == KNN){
         m_bgSubtractor = createBackgroundSubtractorKNN();
-    
+
     } else {
         m_bgSubtractor = createBackgroundSubtractorMOG2();
     }
 
-    
+
 
 }
 
@@ -46,7 +46,7 @@ void BasicProcessing::process(Mat& frame){
     //imshow("MOG", foreground);
 
     binarize(foreground);
-    
+
     smallDilation(foreground);
 
     erosion(foreground);
@@ -101,7 +101,7 @@ void BasicProcessing::binarize(Mat& frame){
 
     //adaptiveThreshold(temp, frame, 255,
     //    ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, m_params.threshold, 0);
-    
+
     if (m_params.thresholdVerbose)
         imshow("binarize", frame);
 }
@@ -114,7 +114,7 @@ void BasicProcessing::dilation(Mat& frame){
     if(RECT == m_params.dilation)        {type = MORPH_RECT;}
     else if(CROSS == m_params.dilation)  {type = MORPH_CROSS;}
     else if(ELLIPSE == m_params.dilation){type = MORPH_ELLIPSE;}
-    
+
     Mat element = getStructuringElement(type,
                                         Size(2*m_params.dilationSize + 1, 2*m_params.dilationSize+1),
                                         Point(m_params.dilationSize, m_params.dilationSize));
@@ -132,12 +132,12 @@ void BasicProcessing::erosion(Mat& frame){
     if(RECT == m_params.erosion)        {type = MORPH_RECT;}
     else if(CROSS == m_params.erosion)  {type = MORPH_CROSS;}
     else if(ELLIPSE == m_params.erosion){type = MORPH_ELLIPSE;}
-    
+
     Mat element = getStructuringElement(type,
                                         Size(2*m_params.erosionSize + 1, 2*m_params.erosionSize+1),
                                         Point(m_params.erosionSize, m_params.erosionSize));
     erode(temp, frame, element);
-    
+
     if (m_params.erosionVerbose)
         imshow("erosion", frame);
 }

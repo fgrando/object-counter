@@ -11,7 +11,7 @@ DrawPolygonCmd::DrawPolygonCmd(char key, cv::Scalar color)
     , m_previousEvent(-1)
     , m_color(color)
 {
-    
+
 }
 
 DrawPolygonCmd::~DrawPolygonCmd(){}
@@ -34,7 +34,7 @@ void DrawPolygonCmd::process(const UserInput& input){
             cout << "polycmd started" << endl;
         }
         break;
-    
+
     case State::WaitOrigin:
         if (lbuttonFallingEdge){
             m_tempPoint = {input.x, input.y};
@@ -44,7 +44,7 @@ void DrawPolygonCmd::process(const UserInput& input){
             m_state = State::Preview;
         }
         break;
-    
+
     case State::Preview:
         m_tempPoint = {input.x, input.y};
 
@@ -65,7 +65,7 @@ void DrawPolygonCmd::process(const UserInput& input){
         } else {
             if (lbuttonFallingEdge){
                 cout << "destination set " << m_tempPoint << endl;
-                
+
                 // save
                 m_points.push_back(m_tempPoint);
                 cout << m_points.size() << " points" << endl;
@@ -93,8 +93,8 @@ void DrawPolygonCmd::draw(Mat& frame){
     cv::Mat overlay;
     const double alpha = 0.3;
     frame.copyTo(overlay);
-    
-    
+
+
     // draw the polygon
     vector<Point> contour = m_points;
     if (m_state == State::Preview){
@@ -103,7 +103,7 @@ void DrawPolygonCmd::draw(Mat& frame){
 
     const Point *pts = (const Point*) Mat(contour).data;
     int npts = Mat(contour).rows;
-    
+
     polylines(frame, &pts, &npts, 1, true, m_color);
 
     if (contour.size() > 2){

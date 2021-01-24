@@ -28,7 +28,7 @@ struct Blob {
     uint64_t id;
     uint64_t age; // frames
     Position pos;
-    Timestamp timestamp; 
+    Timestamp timestamp;
     Rect rect;
     double distancePx;
 
@@ -56,13 +56,13 @@ struct Blob {
             static const int thickness = 1;
             static const float scale = 0.5;
 
-            std::string text = std::to_string(id) + 
-                               "(" + std::to_string(age) + ") " + 
+            std::string text = std::to_string(id) +
+                               "(" + std::to_string(age) + ") " +
                                "(" + std::to_string(distancePx) + ")";
-         
+
             circle(frame, pos.center, pos.radius, cyan, thickness);
             rectangle(frame, rect, yellow, thickness);
-            
+
             Point2f label = pos.center;
             label.y+=pos.radius;
 
@@ -76,8 +76,8 @@ struct Blob {
     inline bool expired(const Timestamp& t){
         std::chrono::milliseconds lifetime (DB::get().detectionLifetimeMs);
         std::chrono::milliseconds delta(0);
-        
-        delta = 
+
+        delta =
             std::chrono::duration_cast<std::chrono::milliseconds> (t - timestamp);
 
         // expire the blob if it does not move according to age
@@ -99,7 +99,7 @@ class UUID {
 public:
     static uint64_t next() {
         static uint64_t counter = 0;
-        return counter++; 
+        return counter++;
     }
 };
 

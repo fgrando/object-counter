@@ -1,10 +1,6 @@
 #ifndef PERSISTENCE_H
 #define PERSISTENCE_H
 
-//#include <opencv2/core/core.hpp>
-//#include <opencv2/imgproc/imgproc.hpp>
-//#include <opencv2/highgui/highgui.hpp>
-
 #include <string>
 #include <iostream>
 #include <INIReader.h>
@@ -35,24 +31,26 @@ class DB{
         string processSubtractor;
         string processErosion;
         string processDilation;
+        bool mainVerbose;
+
         int detectionLifetimeMs;
         int detectionAgeToCheckDistanceFrames;
         int detectionPathDistancePx;
         int detectionMinPathLenToBeDetected;
+
     private:
         DB() { load("configs.ini"); }
-
 
         inline void load(string name)
         {
             INIReader reader(name);
-            
+
             if (reader.ParseError() != 0) {
                 std::cout << "failed to load " << name << "\n";
             }
 
             string SOURCE;
-            
+
             SOURCE = "capture";
             captureSource = reader.Get(SOURCE, "source", "?");
             captureResize = reader.GetReal(SOURCE, "resize", -1);
@@ -75,6 +73,7 @@ class DB{
             processSubtractor = reader.Get(SOURCE, "subtractor", "?");
             processErosion = reader.Get(SOURCE, "erosion", "?");
             processDilation = reader.Get(SOURCE, "dilation", "?");
+            mainVerbose = reader.GetBoolean(SOURCE, "mainVerbose", true);
 
             SOURCE = "detection";
             detectionLifetimeMs = reader.GetInteger(SOURCE, "lifetimeMs", -1);
@@ -82,8 +81,8 @@ class DB{
             detectionPathDistancePx = reader.GetInteger(SOURCE, "pathDistancePx", -1);
             detectionMinPathLenToBeDetected = reader.GetInteger(SOURCE, "minPathLenToBeDetected", -1);
 
+
             std::cout   << "source " << captureSource << endl
-                        
                         << "resize " << captureResize << endl
                         << "blur " << captureBlur << endl
                         << "textX " << processTextX << endl
@@ -106,6 +105,7 @@ class DB{
                         << "ageToCheckDistanceFrames " << detectionAgeToCheckDistanceFrames << endl
                         << "pathDistancePx " << detectionPathDistancePx << endl
                         << "minPathLenToBeDetected " << detectionMinPathLenToBeDetected << endl
+                        << "mainVerbose " << mainVerbose << endl
                     << endl;
         }
 };

@@ -8,10 +8,10 @@
 using namespace cv;
 using namespace std;
 
-vector<string> trackerTypes = {"BOOSTING", "MIL", "KCF", "TLD", "MEDIANFLOW", "GOTURN", "MOSSE", "CSRT"}; 
+vector<string> trackerTypes = {"BOOSTING", "MIL", "KCF", "TLD", "MEDIANFLOW", "GOTURN", "MOSSE", "CSRT"};
 
 // create tracker by name
-inline Ptr<Tracker> createTrackerByName(string trackerType) 
+inline Ptr<Tracker> createTrackerByName(string trackerType)
 {
   Ptr<Tracker> tracker;
   if (trackerType ==  trackerTypes[0])
@@ -44,16 +44,16 @@ inline void getRandomColors(vector<Scalar>& colors, int numColors)
 {
   RNG rng(0);
   for(int i=0; i < numColors; i++)
-    colors.push_back(Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255))); 
+    colors.push_back(Scalar(rng.uniform(0,255), rng.uniform(0, 255), rng.uniform(0, 255)));
 }
 
 inline void track(Mat& frame){
     static vector<Rect> bboxes;
     static bool init = false;
-    static vector<Scalar> colors;  
+    static vector<Scalar> colors;
     static Ptr<MultiTracker> multiTracker = cv::MultiTracker::create();
 
-    if (!init) 
+    if (!init)
     {
         init = true;
 
@@ -68,15 +68,15 @@ inline void track(Mat& frame){
         cout << "\n==========================================================\n";
         //cv::selectROIs("MultiTracker", frame, bboxes, showCrosshair, fromCenter);
 
-        
+
         bboxes.push_back(Rect(Point(365,302),Point(400,326)));
 
 
         // quit if there are no objects to track
         if(bboxes.size() < 1)
           return;
-    
-        getRandomColors(colors, bboxes.size()); 
+
+        getRandomColors(colors, bboxes.size());
 
 
 
@@ -87,7 +87,7 @@ inline void track(Mat& frame){
         // Initialize multitracker
         for(int i=0; i < bboxes.size(); i++)
           multiTracker->add(createTrackerByName(trackerType), frame, Rect2d(bboxes[i]));
-        
+
         cout << "initialized" << endl;
 
     }
@@ -105,7 +105,7 @@ inline void track(Mat& frame){
 
      // Show frame
      imshow("MultiTracker", clon);
-}   
-  
+}
+
 
 #endif /* C32A4EF4_B249_443A_8A28_6CE7025B35FD */

@@ -18,10 +18,10 @@ Scene::Scene()
 {
     DrawPolygonCmd* excludedAreas = new DrawPolygonCmd('e', Scalar(0, 0, 255));
     DrawPolygonCmd* monitoredAreas = new DrawPolygonCmd('m', Scalar(0, 255, 0));
-    
+
     excludedAreas->addMask(&m_exclusionMask);
     monitoredAreas->addMask(&m_discoveryMask);
-    
+
     m_commands.push_back(excludedAreas);
     m_commands.push_back(monitoredAreas);
 }
@@ -36,7 +36,7 @@ void Scene::readMouse(int event, int x, int y){
     m_userInput.event = event;
     m_userInput.x = x;
     m_userInput.y = y;
-    
+
 }
 
 void Scene::readKeyboard(int key){
@@ -132,7 +132,7 @@ void drawRects(Mat& src, Mat& dst){
     vector<Rect> boundRect( contours.size() );
     vector<Point2f>centers( contours.size() );
     vector<float>radius( contours.size() );
-    
+
 
     // surge ignore noise
    // if (contours.size() > 10) { return; }
@@ -195,7 +195,7 @@ void showHelp(){
     cv::Mat body(sz, CV_8UC3, cv::Scalar(255,255,255));
 
     vector<string> lines;
-    
+
     lines.push_back("Abailable commands:");
     lines.push_back("h....Show/hide this help");
     lines.push_back("p....Pause");
@@ -204,7 +204,7 @@ void showHelp(){
     lines.push_back("m....Add monitore zone");
     lines.push_back("s....Save configs to file");
     lines.push_back("q....Exit the program");
-    
+
     for(auto l : lines){
         putText(body, l, origin, FONT_HERSHEY_SIMPLEX, scale , color);
         origin.y += space;
@@ -250,26 +250,26 @@ void Scene::init(){
 
     while (std::getline(infile, line))
     {
-        if (line.size() < 3) 
+        if (line.size() < 3)
             continue;
-        
+
         if (line[0] == '#')
             continue;
 
         stringstream area(line);
-                
+
         string cmd, label, data;
         area >> cmd >> label >> data;
-        
+
 
         vector<Point> poly;
         while(data != ""){
             char trash = 0;
             int x, y = 0;
-            
+
             stringstream pair(data);
             pair >> x >> trash >> y;
-            
+
             poly.push_back(Point(x,y));
 
             if (!(area >> data)) {
@@ -278,10 +278,12 @@ void Scene::init(){
         }
 
         // verbose
-        cout << "[" << cmd << "]" << label << "=";
-        for(auto p : poly)
-            cout << p;
-        cout << endl;
+        if (DB::get().mainVerbose){
+            cout << "[" << cmd << "]" << label << "=";
+            for(auto p : poly)
+                cout << p;
+            cout << endl;
+        }
 
 
         if (cmd == EXCLUDE){
@@ -291,12 +293,20 @@ void Scene::init(){
         if (cmd == INCLUDE){
             m_discoveryMask.addPoly(poly);
         }
-        
+
         if (cmd == COUNTER){
             ImageCounter img(poly[0], poly[1], label);
             m_counters.push_back(img);
         }
     }
+}
+
+void Scene::finish(){
+    cout << "result {" << endl;
+    for(auto& ctr : m_counters){
+        cout << ctr.m_label << " " << ctr.crossedBlobs.size() << endl;
+    }
+    cout << "}" << endl;
 }
 
 void Scene::updateFrame(Mat& frame){
@@ -311,7 +321,7 @@ void Scene::updateFrame(Mat& frame){
 
     m_discoveryMask.initialize(frame);
     m_discoveryMask.draw(frame, Scalar(0, 255, 0, 127));
-    
+
     motionTest(frame);
 
     COP::getInstance().maintain();
@@ -323,7 +333,9 @@ void Scene::updateFrame(Mat& frame){
         ctr.m_counter = ctr.crossedBlobs.size();
 
         for(auto& b : blobs){
-            cout << b.id << " crossed " << ctr.m_label << endl;
+            if (DB::get().mainVerbose)
+                cout << b.id << " crossed " << ctr.m_label << endl;
+
             ctr.crossedBlobs.push_back(b);
         }
         ctr.draw(frame);

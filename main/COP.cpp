@@ -16,10 +16,10 @@ COP& COP::getInstance(){
 
 bool COP::moved(const Blob& a, const Blob&b) {
     static const double thresholdPx = 100;
-    
+
     Point2f difference = a.pos.center - b.pos.center;
     double distance = sqrt(difference.ddot(difference));
-    
+
     return (distance < thresholdPx);
 }
 
@@ -68,10 +68,10 @@ void COP::maintain(){
 }
 
 TrackVector COP::crossed(Point a, Point b, const TrackVector& ignored){
-    //determinant of 
+    //determinant of
     // | x2-x1  x3-x1 |
     // | y2-y1  y3-y1 |
-    
+
     TrackVector blobs;
 
     // check every blob to know if crossed the line
@@ -91,13 +91,13 @@ TrackVector COP::crossed(Point a, Point b, const TrackVector& ignored){
 
         bool crossed = false;
 
-        Point t = blob.path[0];    
+        Point t = blob.path[0];
         int lastDir = ( (b.x-a.x) * (t.y-a.y) ) - ( (b.y - a.y) * (t.x-a.x) );
         for(auto& pts : blob.path) {
             t = pts;
             int dir = ( (b.x-a.x) * (t.y-a.y) ) - ( (b.y - a.y) * (t.x-a.x) );
-            
-            if (((dir > 0) && (lastDir < 0)) || 
+
+            if (((dir > 0) && (lastDir < 0)) ||
                 ((dir < 0) && (lastDir > 0))){
                 crossed = true;
                 break;
@@ -110,7 +110,7 @@ TrackVector COP::crossed(Point a, Point b, const TrackVector& ignored){
         }
 
     }
-    
+
     return blobs;
 }
 

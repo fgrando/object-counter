@@ -7,7 +7,7 @@ using namespace std;
 using namespace cv;
 
 ImageCounter::~ImageCounter(){}
-    
+
 ImageCounter::ImageCounter(cv::Point a, cv::Point b, std::string label)
     : m_start(a)
     , m_end(b)
@@ -27,6 +27,6 @@ void ImageCounter::draw(cv::Mat& frame)
     stringstream ss;
     ss << m_label << "[" << m_counter << "]";
     string text = ss.str();
-    
+
     putText(frame, text, m_end, FONT_HERSHEY_SIMPLEX, scale , color);
 }

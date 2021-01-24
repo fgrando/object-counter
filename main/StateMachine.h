@@ -4,7 +4,7 @@
 
 class StateMachine {
 public:
-	
+
 };
 
 #endif /* A54DF7DE_8ABE_4A30_93A7_90FBB111360C */

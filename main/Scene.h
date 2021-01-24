@@ -30,13 +30,14 @@ public:
     inline string getWindowName() {return "CAM0";}
 
     void readMouse(int event, int x, int y);
-    
+
     void readKeyboard(int key);
-    
+
     void updateFrame(cv::Mat& frame);
 
     void init();
 
+    void finish();
 private:
     void motionTest(cv::Mat& frame);
     int m_mouseX, m_mouseY, m_mouseEvent, m_kbdr;
@@ -51,7 +52,7 @@ private:
 
     DiscoveryMask m_discoveryMask;
 
-    
+
 };
 
 #endif /* A42EBBD8_0DC9_4327_AD95_0129CA08A219 */

@@ -15,7 +15,7 @@ void Mask::initialize(cv::Mat& src){
     if (!m_initialized) {
         m_srcSize = src.size();
         m_initialized = true;
-        
+
         m_mask = Mat(m_srcSize, CV_8UC1, Scalar::all(255));
         //imshow(getWindowTitle(), m_mask);
 
@@ -32,10 +32,10 @@ void Mask::refresh(){
     m_mask = Mat(m_srcSize, CV_8UC1, getBackground());
 
     for(auto& poly : m_polygons){
-        
+
         const Point *pts = (const Point*) Mat(poly).data;
         int npts = Mat(poly).rows;
-        
+
         // wired poly
         //polylines(m_mask, &pts, &npts, 1, true, foreground);
 
@@ -65,7 +65,7 @@ void Mask::draw(cv::Mat& frame, cv::Scalar color) {
     frame.copyTo(overlay);
 
     for(auto& poly : m_polygons){
-        
+
         const Point *pts = (const Point*) Mat(poly).data;
         int npts = Mat(poly).rows;
 
