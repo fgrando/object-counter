@@ -22,11 +22,6 @@ void mouseInput(int event, int x, int y, int flags, void* data){
 }
 
 int main(int argc, char* argv[]) {
-    if(VERBOSE) {
-        namedWindow("detected", WINDOW_AUTOSIZE);
-        setMouseCallback("detected", mouseInput, NULL); // register after the window
-    }
-
     // first module: capture frame from video
     VideoSrc &vid = VideoSrc::instance();
 
@@ -57,6 +52,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if(VERBOSE) {
+        namedWindow("detected", WINDOW_AUTOSIZE);
+        setMouseCallback("detected", mouseInput, NULL); // register after the window
+    }
 
     Mat frame; // raw frame from the capture
     if(vid.get(frame) == false){ // capture a fist frame to initialize opticalflow module
