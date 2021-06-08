@@ -5,60 +5,113 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/video.hpp>
 
+#include "VideoSrc.h"
+#include "OpticalFlow.h"
+#include "Scene.h"
+
 using namespace cv;
 using namespace std;
 
 // optical flow seems to resist to headlights and slow tree moves.
 
-double FACTOR = 0.7;
-int MIN_THRESHOLD = 128; // Tune this value to filter sensitivity (bigger = low sensitivity)
+void drawRects(Mat& src, Mat& dst, Scalar color=Scalar(0, 0, 255));
+void drawPolys(Mat& src, Mat& dst, Scalar color=Scalar(0, 0, 255));
+void drawCircles(Mat& src, Mat& dst, Scalar color=Scalar(0, 0, 255));
 
-int main()
-{
-    VideoCapture capture(samples::findFile("cap4.mp4"));
-    if (!capture.isOpened()){
+int main() {
+    VideoSrc &vid = VideoSrc::instance();
+
+    if (!vid.setCapture("cap2.mp4")){
         //error in opening the video input
         cerr << "Unable to open file!" << endl;
         return 0;
     }
 
+    OpticalFlowBlobs &optFlow = OpticalFlowBlobs::instance();
+    Mat frame, blobs;
 
-    Mat frame, resized, prvs;
-    capture >> frame;
-    cv::resize(frame, resized, cv::Size(), FACTOR, FACTOR);
+    vid.get(frame);
+    optFlow.init(frame);
 
-    cvtColor(resized, prvs, COLOR_BGR2GRAY);
+    Scene& scene = Scene::instance();
+
+    bool verbose = false;
 
     while(true){
-        Mat frame2, next;
-        capture >> frame;
-        cv::resize(frame, frame2, cv::Size(), FACTOR, FACTOR);
-
-        if (frame2.empty())
+        Mat next;
+        vid.get(frame);
+        if (frame.empty())
             break;
 
-        cvtColor(frame2, next, COLOR_BGR2GRAY);
-        Mat flow(prvs.size(), CV_32FC2);
-        calcOpticalFlowFarneback(prvs, next, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+        optFlow.getBlobs(frame, blobs);
+        if (verbose)
+            imshow("optflow", blobs);
 
-        // visualization
-        Mat flow_parts[2];
-        split(flow, flow_parts);
-        Mat magnitude, angle, magn_norm;
-        cartToPolar(flow_parts[0], flow_parts[1], magnitude, angle, true);
-        normalize(magnitude, magn_norm, 0.0f, 1.0f, NORM_MINMAX);
-
-        Mat clouds, mask, colormask, res;
-        magn_norm.convertTo(clouds, CV_8U, 255.0);
-        threshold(clouds, mask, 100, 255, THRESH_BINARY);
-
-        addWeighted(next, 0.2, mask, 0.8, 0, res);
-        imshow("result", res);
 
         int keyboard = waitKey(1);
         if (keyboard == 'q' || keyboard == 27)
             break;
-        prvs = next;
+
+        if (verbose) {
+            drawRects(blobs, frame);
+            drawPolys(blobs, frame);
+            //drawCircles(blobs, frame);
+        }
+
+        scene.updateBlobs(blobs);
+        scene.draw(frame);
+
+        bool save = false;
+        scene.maintain();
+
+        if (verbose)
+            imshow("detected", frame);
     }
 }
 
+
+void drawPolys(Mat& src, Mat& dst, Scalar color){
+    std::vector<std::vector<cv::Point> > contours;
+    cv::Mat contourOutput = src.clone();
+    cv::findContours(contourOutput, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
+    vector<vector<Point> > contours_poly(contours.size());
+
+    for( size_t i = 0; i< contours.size(); i++ )
+    {
+        approxPolyDP(contours[i], contours_poly[i], 3, true );
+        drawContours(dst, contours_poly, (int)i, color);
+    }
+}
+
+void drawCircles(Mat& src, Mat& dst, Scalar color){
+    std::vector<std::vector<cv::Point> > contours;
+    cv::Mat contourOutput = src.clone();
+    cv::findContours(contourOutput, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
+    vector<vector<Point> > contours_poly(contours.size());
+
+    vector<Point2f>centers(contours.size());
+    vector<float>radius(contours.size());
+
+    for( size_t i = 0; i< contours.size(); i++ )
+    {
+        approxPolyDP(contours[i], contours_poly[i], 3, true );
+        minEnclosingCircle(contours_poly[i], centers[i], radius[i]);
+        circle( dst, centers[i], (int)radius[i], color, 1 );
+    }
+}
+
+void drawRects(Mat& src, Mat& dst, Scalar color){
+    std::vector<std::vector<cv::Point> > contours;
+    cv::Mat contourOutput = src.clone();
+    cv::findContours(contourOutput, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
+    vector<vector<Point> > contours_poly(contours.size());
+
+    vector<Rect> boundRect(contours.size());
+
+    for( size_t i = 0; i< contours.size(); i++ )
+    {
+        approxPolyDP(contours[i], contours_poly[i], 3, true );
+        boundRect[i] = boundingRect( contours_poly[i] );
+        rectangle( dst, boundRect[i].tl(), boundRect[i].br(), color, 1 );
+    }
+}
