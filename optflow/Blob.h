@@ -16,10 +16,16 @@ using namespace std;
 // situational picture
 using namespace cv;
 
+extern bool VERBOSE;
 
-#define CONST_detectionLifetimeMs 100
+#define CONST_detectionLifetimeMs 5000 // optical flow takes time to process
 #define CONST_detectionAgeToCheckDistanceFrames 40
-#define CONST_detectionPathDistancePx 80
+#define CONST_detectionPathDistancePx 60
+
+#define PINK Scalar(255,0,255)
+#define CYAN Scalar(255,255,0)
+#define BLACK Scalar(0,0,0)
+
 
 struct Blob {
 
@@ -27,6 +33,17 @@ struct Blob {
         Point2f  center;
         float    radius;
     };
+
+    Blob() {
+        color = PINK;
+        startFrame = endFrame = 0;
+        id = age = 0;
+        pos.center = {0};
+        pos.radius = 0;
+        distancePx = 0.0;
+        path.clear();
+        saved = false;
+    }
 
     unsigned long long startFrame;
     unsigned long long endFrame;
@@ -36,7 +53,10 @@ struct Blob {
     Timestamp timestamp;
     Rect rect;
     double distancePx;
-    Mat thumb;
+    Scalar color;
+    bool saved;
+    int bestFrame;
+    int bestDistance;
 
     std::vector<cv::Point> path;
 
@@ -49,38 +69,50 @@ struct Blob {
 
         Point2f difference = Point(position.center.x, position.center.y) - path.back();
         distancePx += sqrt(difference.ddot(difference));
+
+        Point2f diferenceCenter = Point(position.center.x, position.center.y) - VideoSrc::instance().center();
+        double disttanceCenter=  sqrt(difference.ddot(difference));
+        if (disttanceCenter < bestDistance){
+            bestDistance = disttanceCenter;
+            bestFrame = VideoSrc::instance().count();
+        }
+
+        color = PINK;
     }
 
     inline void update(const Rect& r) {
+        color = PINK;
         rect = r;
     }
 
     inline void draw(Mat& frame) {
-            static const Scalar black(0,0,0);
-            static const Scalar green(0,255,0);
-            static const Scalar white(255,255,255);
-            static const Scalar cyan(255,255,0);
-            static const Scalar pink(255,0,255);
-            static const int thickness = 1;
-            static const float scale = 0.4;
+        static const Scalar black(0,0,0);
+        static const Scalar green(0,255,0);
+        static const Scalar white(255,255,255);
+        static const int thickness = 1;
+        static const float scale = 0.4;
 
-            std::string text = std::to_string(id) +
-                               "(" + std::to_string(age) + "f) " +
-                               "(" + std::to_string((int)rect.area()) + "m)";
+        std::string text = std::to_string(id) +
+                           "(" + std::to_string(age) + "f) " +
+                           "(" + std::to_string((int)rect.area()) + "m)";
 
-            circle(frame, pos.center, pos.radius, pink, thickness);
-            //rectangle(frame, rect, white, thickness);
+        circle(frame, pos.center, pos.radius, color, thickness);
+        //rectangle(frame, rect, white, thickness);
 
-            // add label:
-            Point2f label = pos.center;
-            label.y+=pos.radius;
+        // add label:
+        Point2f label = pos.center;
+        label.y+=pos.radius;
 
-            putText(frame, text, label, FONT_HERSHEY_SIMPLEX, scale , black, 3);
-            putText(frame, text, label, FONT_HERSHEY_SIMPLEX, scale , white);
+        putText(frame, text, label, FONT_HERSHEY_SIMPLEX, scale , black, 3);
+        putText(frame, text, label, FONT_HERSHEY_SIMPLEX, scale , white);
 
+        if (VERBOSE) {
             const Point *pts = (const Point*) Mat(path).data;
             int npts = Mat(path).rows;
             polylines(frame, &pts, &npts, 1, false, green);
+        }
+
+        color = BLACK; // this will change if this blob receives an update
     }
 
     inline bool expired(const Timestamp& t){
@@ -101,8 +133,6 @@ struct Blob {
 
         return (delta > lifetime);
     }
-
-
 };
 
 

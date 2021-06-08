@@ -13,14 +13,18 @@
 #include "Blob.h"
 using namespace cv;
 
-#define MINAREAPX 800 // current size is 0.7 short
-#define MINAGETODISPLAY 2 //frames
-#define BLOBAGETRIGGERSAVE (MINAGETODISPLAY+2)
+#define MINAREAPX 700 // current size is 0.7 short
+#define MINAGETODISPLAY 1 //frames
+#define BLOBAGETRIGGERSAVE (MINAGETODISPLAY+8)
+#define MAXBLOBDISTANCEPX 120
+
+extern bool VERBOSE;
 
 typedef  std::vector<Blob> TrackVector;
 
 class Scene{
 public:
+    vector<int> m_framesToExport;
 
     inline static Scene& instance() { static Scene instance; return instance; }
 
@@ -39,7 +43,7 @@ public:
             approxPolyDP( contours[i], contours_poly[i], 3, true );
             minEnclosingCircle(contours_poly[i], centers[i], radius[i]);
 
-            Blob temp = {0};
+            Blob temp;
             temp.startFrame = VideoSrc::instance().count();
             temp.age = 0;
             temp.id = UUID::next();
@@ -75,11 +79,20 @@ public:
     }
 
     void draw(Mat& frame){
+
+        if (VERBOSE) {
+            // draw center
+            putText(frame, "+", VideoSrc::instance().center(), FONT_HERSHEY_SIMPLEX, 1.0 , Scalar(0,0,255));
+        }
+
+        bool framesaved = false;
         for(auto& blob : m_tracks){
             if (blob.age >= MINAGETODISPLAY) {
                 blob.draw(frame);
 
-                if (blob.age == MINAGETODISPLAY) {
+                if ((blob.age == BLOBAGETRIGGERSAVE) && !blob.saved) {
+                    blob.saved = true;
+
                     // saving on deletion (so we know the path)
                     std::string file = VideoSrc::instance().name();
                     std::size_t found = file.find_last_of('.');
@@ -94,6 +107,7 @@ public:
 
                     std::string name = file + "_"  + frameStr + ".jpeg";
                     imwrite(name, frame);
+                    framesaved = true;
                 }
             }
         }
@@ -107,12 +121,14 @@ public:
             if (it->expired(now)) {
                 it->endFrame = VideoSrc::instance().count();
 
-                if (it->age > BLOBAGETRIGGERSAVE) {
+                if (it->age >= BLOBAGETRIGGERSAVE) {
                     std::cout << it->id << " " << it->startFrame << " " << it->endFrame << " " << it->age << std::endl;
                 }
 
+                m_framesToExport.push_back(it->bestFrame);
+
                 it = m_tracks.erase(it);
-            //    cout << "erased " << it->id << " " << it->age << endl;
+                //cout << "erased " << it->id << " " << it->age << endl;
             } else {
                 ++it;
             }
@@ -121,12 +137,10 @@ public:
 
 private:
     inline bool moved(const Blob& a, const Blob&b){
-        static const double thresholdPx = 100;
-
         Point2f difference = a.pos.center - b.pos.center;
         double distance = sqrt(difference.ddot(difference));
 
-        return (distance < thresholdPx);
+        return (distance <= MAXBLOBDISTANCEPX);
     }
 
 

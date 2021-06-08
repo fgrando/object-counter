@@ -5,6 +5,7 @@
 #include "VideoSrc.h"
 #include "OpticalFlow.h"
 #include "Scene.h"
+#include "FilterROI.h"
 #include "utils.h"
 
 using namespace cv;
@@ -12,9 +13,20 @@ using namespace std;
 
 // optical flow seems to resist to headlights and slow tree moves.
 
+// verbose is enabled
+bool VERBOSE = true;
 
+void mouseInput(int event, int x, int y, int flags, void* data){
+    if(event == EVENT_LBUTTONDOWN)
+        cout << x << ", " << y << endl;
+}
 
 int main(int argc, char* argv[]) {
+    if(VERBOSE) {
+        namedWindow("detected", WINDOW_AUTOSIZE);
+        setMouseCallback("detected", mouseInput, NULL); // register after the window
+    }
+
     // first module: capture frame from video
     VideoSrc &vid = VideoSrc::instance();
 
@@ -23,9 +35,6 @@ int main(int argc, char* argv[]) {
 
     // third module: get frame with blobs and classify and draw
     Scene& scene = Scene::instance();
-
-    // verbose is enabled
-    bool verbose = true;
 
     // check if all arguments were received
     if (argc > 1){
@@ -44,10 +53,9 @@ int main(int argc, char* argv[]) {
     for(int i = 0; i < argc; i++){
         string arg(argv[i]);
         if(arg == "-nogui") {
-            verbose=false;
+            VERBOSE=false;
         }
     }
-
 
 
     Mat frame; // raw frame from the capture
@@ -66,9 +74,13 @@ int main(int argc, char* argv[]) {
             break;
         }
 
+        Mat masked;
+        frame.copyTo(masked);
+        FilterROI::instance().filter(masked); // remove unwanted areas
+
         // identify movements in the frame with blobs
         Mat frameWithBlobs;
-        optFlow.getBlobs(frame, frameWithBlobs);
+        optFlow.getBlobs(masked, frameWithBlobs);
 
         // classify detected blobs
         scene.updateBlobs(frameWithBlobs);
@@ -76,7 +88,7 @@ int main(int argc, char* argv[]) {
         scene.maintain();
 
         // show windows in verbose mode
-        if (verbose) {
+        if (VERBOSE) {
             int keyboard = waitKey(1);
             if (keyboard == 'q' || keyboard == 27)
                 break;
@@ -89,4 +101,32 @@ int main(int argc, char* argv[]) {
             imshow("detected", frame);
         }
     }
+
+#if 0
+    // save specific frames:
+    // reset capture
+    vid.setCapture(vid.name()); // reset capture to the beggining
+    int counter = 0;
+    while(vid.get(frame)) {
+        for(auto idx: scene.m_framesToExport){
+            if(counter == idx){
+                std::string file = VideoSrc::instance().name();
+                std::size_t found = file.find_last_of('.');
+                file = file.substr(0, found);
+
+                // insert leading zeroes
+                std::string frameStr = std::to_string(idx);
+                int maxDigits = 7;
+                while(frameStr.length() < maxDigits) {
+                    frameStr = "0" + frameStr;
+                }
+
+                std::string name = file + "_RAW_"  + frameStr + ".jpeg";
+                imwrite(name, frame);
+                break; // frame already saved, if another blob needed it, it will be in this same image
+            }
+        }
+        counter++;
+    }
+#endif
 }
