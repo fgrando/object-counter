@@ -1,117 +1,92 @@
 #include <iostream>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/video.hpp>
 
 #include "VideoSrc.h"
 #include "OpticalFlow.h"
 #include "Scene.h"
+#include "utils.h"
 
 using namespace cv;
 using namespace std;
 
 // optical flow seems to resist to headlights and slow tree moves.
 
-void drawRects(Mat& src, Mat& dst, Scalar color=Scalar(0, 0, 255));
-void drawPolys(Mat& src, Mat& dst, Scalar color=Scalar(0, 0, 255));
-void drawCircles(Mat& src, Mat& dst, Scalar color=Scalar(0, 0, 255));
 
-int main() {
+
+int main(int argc, char* argv[]) {
+    // first module: capture frame from video
     VideoSrc &vid = VideoSrc::instance();
 
-    if (!vid.setCapture("cap2.mp4")){
-        //error in opening the video input
-        cerr << "Unable to open file!" << endl;
-        return 0;
-    }
-
+    // second module: get raw frame and generate a frame with blobs
     OpticalFlowBlobs &optFlow = OpticalFlowBlobs::instance();
-    Mat frame, blobs;
 
-    vid.get(frame);
-    optFlow.init(frame);
-
+    // third module: get frame with blobs and classify and draw
     Scene& scene = Scene::instance();
 
-    bool verbose = false;
+    // verbose is enabled
+    bool verbose = true;
 
-    while(true){
-        Mat next;
-        vid.get(frame);
-        if (frame.empty())
+    // check if all arguments were received
+    if (argc > 1){
+        string src(argv[1]);
+        if (!vid.setCapture(src)){
+            //error in opening the video input
+            cerr << "Unable to open file '" + src + "'!" << endl;
+            return RETURN_BADFILE;
+        }
+    } else {
+        cerr << "Usage: " << argv[0] << " [-nogui] <filename.mp4>" << endl;
+        return RETURN_BADARGS;
+    }
+
+    // check if we run in verbose mode
+    for(int i = 0; i < argc; i++){
+        string arg(argv[i]);
+        if(arg == "-nogui") {
+            verbose=false;
+        }
+    }
+
+
+
+    Mat frame; // raw frame from the capture
+    if(vid.get(frame) == false){ // capture a fist frame to initialize opticalflow module
+        cerr << "Could not get frame from caputure" << endl;
+        return RETURN_BADFRAME;
+    }
+
+    optFlow.init(frame); // initialize the module
+
+    // main loop
+    while(true) {
+
+        // get frame from capture
+        if (vid.get(frame) == false) {
             break;
-
-        optFlow.getBlobs(frame, blobs);
-        if (verbose)
-            imshow("optflow", blobs);
-
-
-        int keyboard = waitKey(1);
-        if (keyboard == 'q' || keyboard == 27)
-            break;
-
-        if (verbose) {
-            drawRects(blobs, frame);
-            drawPolys(blobs, frame);
-            //drawCircles(blobs, frame);
         }
 
-        scene.updateBlobs(blobs);
-        scene.draw(frame);
+        // identify movements in the frame with blobs
+        Mat frameWithBlobs;
+        optFlow.getBlobs(frame, frameWithBlobs);
 
-        bool save = false;
+        // classify detected blobs
+        scene.updateBlobs(frameWithBlobs);
+        scene.draw(frame);
         scene.maintain();
 
-        if (verbose)
+        // show windows in verbose mode
+        if (verbose) {
+            int keyboard = waitKey(1);
+            if (keyboard == 'q' || keyboard == 27)
+                break;
+
+            //drawRects(frameWithBlobs, frame);
+            drawPolys(frameWithBlobs, frame);
+            //drawCircles(frameWithBlobs, frame);
+
+            imshow("optflow", frameWithBlobs);
             imshow("detected", frame);
-    }
-}
-
-
-void drawPolys(Mat& src, Mat& dst, Scalar color){
-    std::vector<std::vector<cv::Point> > contours;
-    cv::Mat contourOutput = src.clone();
-    cv::findContours(contourOutput, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
-    vector<vector<Point> > contours_poly(contours.size());
-
-    for( size_t i = 0; i< contours.size(); i++ )
-    {
-        approxPolyDP(contours[i], contours_poly[i], 3, true );
-        drawContours(dst, contours_poly, (int)i, color);
-    }
-}
-
-void drawCircles(Mat& src, Mat& dst, Scalar color){
-    std::vector<std::vector<cv::Point> > contours;
-    cv::Mat contourOutput = src.clone();
-    cv::findContours(contourOutput, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
-    vector<vector<Point> > contours_poly(contours.size());
-
-    vector<Point2f>centers(contours.size());
-    vector<float>radius(contours.size());
-
-    for( size_t i = 0; i< contours.size(); i++ )
-    {
-        approxPolyDP(contours[i], contours_poly[i], 3, true );
-        minEnclosingCircle(contours_poly[i], centers[i], radius[i]);
-        circle( dst, centers[i], (int)radius[i], color, 1 );
-    }
-}
-
-void drawRects(Mat& src, Mat& dst, Scalar color){
-    std::vector<std::vector<cv::Point> > contours;
-    cv::Mat contourOutput = src.clone();
-    cv::findContours(contourOutput, contours, RETR_TREE, CHAIN_APPROX_SIMPLE);
-    vector<vector<Point> > contours_poly(contours.size());
-
-    vector<Rect> boundRect(contours.size());
-
-    for( size_t i = 0; i< contours.size(); i++ )
-    {
-        approxPolyDP(contours[i], contours_poly[i], 3, true );
-        boundRect[i] = boundingRect( contours_poly[i] );
-        rectangle( dst, boundRect[i].tl(), boundRect[i].br(), color, 1 );
+        }
     }
 }

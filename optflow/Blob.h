@@ -56,9 +56,11 @@ struct Blob {
     }
 
     inline void draw(Mat& frame) {
-            static const Scalar blue(255,0,0);
-            static const Scalar yellow(128,255,255);
+            static const Scalar black(0,0,0);
+            static const Scalar green(0,255,0);
+            static const Scalar white(255,255,255);
             static const Scalar cyan(255,255,0);
+            static const Scalar pink(255,0,255);
             static const int thickness = 1;
             static const float scale = 0.4;
 
@@ -66,26 +68,19 @@ struct Blob {
                                "(" + std::to_string(age) + "f) " +
                                "(" + std::to_string((int)rect.area()) + "m)";
 
-            circle(frame, pos.center, pos.radius, cyan, thickness);
-            //rectangle(frame, rect, yellow, thickness);
+            circle(frame, pos.center, pos.radius, pink, thickness);
+            //rectangle(frame, rect, white, thickness);
 
             // add label:
             Point2f label = pos.center;
             label.y+=pos.radius;
 
-            int charHeigthPx = 13;
-            int charWidthPx = 7;
-            label.y-=charHeigthPx;
-            Rect textBG(label, Size(text.length()*charWidthPx, charHeigthPx));
-            rectangle(frame, textBG, Scalar(128,128, 128), -1);
-
-            label.y+=charHeigthPx;
-            putText(frame, text, label, FONT_HERSHEY_SIMPLEX, scale , yellow);
-
+            putText(frame, text, label, FONT_HERSHEY_SIMPLEX, scale , black, 3);
+            putText(frame, text, label, FONT_HERSHEY_SIMPLEX, scale , white);
 
             const Point *pts = (const Point*) Mat(path).data;
             int npts = Mat(path).rows;
-            polylines(frame, &pts, &npts, 1, false, blue);
+            polylines(frame, &pts, &npts, 1, false, green);
     }
 
     inline bool expired(const Timestamp& t){

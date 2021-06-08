@@ -1,7 +1,6 @@
 #ifndef ACE47ABA_7A37_4D21_AE85_BC8D9D861845
 #define ACE47ABA_7A37_4D21_AE85_BC8D9D861845
 
-#include <iostream>
 #include <string>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
@@ -9,6 +8,7 @@
 #include <opencv2/video.hpp>
 
 using namespace cv;
+
 class VideoSrc{
 public:
     double ResizeFactor;
@@ -33,11 +33,23 @@ public:
         return total;
     }
 
+    inline int width() {
+        int width = m_capture.get(CAP_PROP_FRAME_WIDTH);
+        return width;
+    }
 
-    inline void get(Mat& frame){
-        Mat tmp;
-        m_capture >> tmp;
-        cv::resize(tmp, frame, cv::Size(), ResizeFactor, ResizeFactor);
+    inline int height() {
+        int height = m_capture.get(CAP_PROP_FRAME_HEIGHT);
+        return height;
+    }
+
+    inline bool get(Mat& frame){
+        m_capture >> m_frame;
+
+        if (!m_frame.empty())
+            cv::resize(m_frame, frame, cv::Size(), ResizeFactor, ResizeFactor);
+
+        return (!m_frame.empty());
     }
 
     inline static VideoSrc& instance() { static VideoSrc instance; return instance; }
@@ -45,6 +57,7 @@ public:
 private:
     VideoCapture m_capture;
     std::string m_name;
+    Mat m_frame;
 };
 
 #endif /* ACE47ABA_7A37_4D21_AE85_BC8D9D861845 */

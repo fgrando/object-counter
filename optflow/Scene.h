@@ -13,7 +13,7 @@
 #include "Blob.h"
 using namespace cv;
 
-#define MINAREAPX 800 // current size is 0.5 short
+#define MINAREAPX 800 // current size is 0.7 short
 #define MINAGETODISPLAY 2 //frames
 #define BLOBAGETRIGGERSAVE (MINAGETODISPLAY+2)
 
@@ -21,6 +21,7 @@ typedef  std::vector<Blob> TrackVector;
 
 class Scene{
 public:
+
     inline static Scene& instance() { static Scene instance; return instance; }
 
     inline void updateBlobs(Mat& src) {
